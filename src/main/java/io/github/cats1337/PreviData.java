@@ -26,7 +26,22 @@ public class PreviData {
         load();
     }
     
-    // create a folder and file if they don't exist
+    // FIXME MAYBE? I THINK I FIXED IT BUT I GO SLEEP
+    public void createFile() {
+        File folder = new File("plugins/PreviData");
+        if (!folder.exists()) {
+            folder.mkdir();
+        }
+        File file = new File("plugins/AchieveTracker/psnotify.yml");
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
 
     public void load() {
         if (!file.exists()) {
