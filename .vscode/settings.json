@@ -1,3 +1,5 @@
 {
-    "java.configuration.updateBuildConfiguration": "interactive"
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "editor.formatOnPaste": true,
+    "java.compile.nullAnalysis.mode": "automatic",
 }
