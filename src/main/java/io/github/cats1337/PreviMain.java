@@ -13,12 +13,14 @@ public class PreviMain extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         LOGGER.info("PreviStack is enabled!");
+        
+        previData = new PreviData(this);
+        previData.load();
+        
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(new PreviListener(this), this);
         getCommand("psnotify").setExecutor(new PreviCommands(this));
 
-        previData = new PreviData(this);
-        previData.load();
     }
 
     @Override

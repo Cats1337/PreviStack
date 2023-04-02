@@ -20,27 +20,17 @@ public class PreviData {
         this.plugin = plugin;
         this.notifyStatuses = new HashMap<>();
 
-        this.file = new File(plugin.getDataFolder(), "psnotify.yml");
+        // Create the 'PreviData' folder if it doesn't exist
+        File dataFolder = plugin.getDataFolder();
+        if (!dataFolder.exists()) {
+            dataFolder.mkdir();
+        }
+
+        // Load the configuration file
+        this.file = new File(dataFolder, "psnotify.yml");
         this.config = YamlConfiguration.loadConfiguration(file);
 
         load();
-    }
-    
-    // FIXME MAYBE? I THINK I FIXED IT BUT I GO SLEEP
-    public void createFile() {
-        File folder = new File("plugins/PreviData");
-        if (!folder.exists()) {
-            folder.mkdir();
-        }
-        File file = new File("plugins/AchieveTracker/psnotify.yml");
-        if (!file.exists()) {
-            try {
-                file.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
     }
 
     public void load() {
