@@ -10,6 +10,9 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.event.entity.EntityPotionEffectEvent;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import net.md_5.bungee.api.ChatColor;
 
@@ -29,26 +32,39 @@ public class PreviListener implements Listener {
 
     public static final String PS = colorizeHex("&#3494E6[&#7163EEP&#AE31F7S&#EB00FF] ");
 
-    private final String TOO_MANY = colorizeHex(
-            "&#CB2D3EY&#CF2F3Eo&#D3323Eu &#D7343Eh&#DB373Ea&#DF393Ev&#E33B3Ee &#E73E3Et&#EB403Eo&#EF423Eo &#F3453Em&#F7473Ea&#FB4A3En&#FF4C3Ey");
-    private final String CANT_CARRY = colorizeHex(
-            "&#CB2D3EY&#CD2E3Eo&#D0303Eu &#D2313Ec&#D4333Ea&#D7343En&#D9353En&#DC373Eo&#DE383Et &#E03A3Ec&#E33B3Ea&#E53D3Er&#E73E3Er&#EA3F3Ey &#EC413Em&#EE423Eo&#F1443Er&#F3453Ee &#F6463Et&#F8483Eh&#FA493Ea&#FD4B3En &#FF4C3E&l");
+    private final String TOO_MANY = colorizeHex("&#CB2D3EY&#CF2F3Eo&#D3323Eu &#D7343Eh&#DB373Ea&#DF393Ev&#E33B3Ee &#E73E3Et&#EB403Eo&#EF423Eo &#F3453Em&#F7473Ea&#FB4A3En&#FF4C3Ey");
+    private final String CANT_CARRY = colorizeHex("&#CB2D3EY&#CD2E3Eo&#D0303Eu &#D2313Ec&#D4333Ea&#D7343En&#D9353En&#DC373Eo&#DE383Et &#E03A3Ec&#E33B3Ea&#E53D3Er&#E73E3Er&#EA3F3Ey &#EC413Em&#EE423Eo&#F1443Er&#F3453Ee &#F6463Et&#F8483Eh&#FA493Ea&#FD4B3En &#FF4C3E&l");
 
     private final String EXCESS_DROP = colorizeHex(" &8Excess Dropped.");
     private final String EXCLAIM = colorizeHex("&c!");
     private final String PERIOD = colorizeHex("&c.");
 
-    private final String EPEARL = colorizeHex(
-            " &#00FFE0E&#18E6E3n&#2FCCE6d&#47B3E9e&#5E99ECr &#7680F0P&#8D66F3e&#A54DF6a&#BC33F9r&#D41AFCl&#EB00FFs");
+    private final String EPEARL = colorizeHex(" &#00FFE0E&#18E6E3n&#2FCCE6d&#47B3E9e&#5E99ECr &#7680F0P&#8D66F3e&#A54DF6a&#BC33F9r&#D41AFCl&#EB00FFs");
     private final String CWEB = colorizeHex(" &#C4CED2C&#B7C1C4o&#AAB3B7b&#9EA6A9w&#91989Be&#848B8Eb&#777D80s");
-    private final String NOTCH = colorizeHex(
-            " &#FFE259N&#FFDC58o&#FFD657t&#FFD057c&#FFCA56h &#FFC555A&#FFBF54p&#FFB953p&#FFB353l&#FFAD52e&#FFA751s");
+    private final String NOTCH = colorizeHex(" &#FFE259N&#FFDC58o&#FFD657t&#FFD057c&#FFCA56h &#FFC555A&#FFBF54p&#FFB953p&#FFB353l&#FFAD52e&#FFA751s");
+    
+    private final String NO_STRENGTH = colorizeHex("&#E90700S&#EA0B00t&#EC0F00r&#ED1200e&#EF1600n&#F01A00g&#F11E00t&#F32200h &#F42600R&#F52900e&#F72D00d&#F83100u&#FA3500c&#FB3900e&#FC3C00d &#FE4000→ &#FF44001");
+    private final String NO_RESIST = colorizeHex("&#828A9BR&#7E8698e&#7A8395s&#777F92i&#737B8Es&#6F788Bt&#6B7488a&#687085n&#646D82c&#60697Fe &#5C657BR&#586278e&#555E75d&#515A72u&#4D576Fc&#49536Ce&#464F68d &#424C65→ &#3E48621");
+
 
     private final long MESSAGE_COOLDOWN = 10000; // 10 seconds in milliseconds
     private final HashMap<UUID, Long> lastMessageTime = new HashMap<>();
 
     public PreviListener(PreviMain plugin) {
         this.plugin = plugin;
+    }
+
+    public static String colorize(String str) {
+        return ChatColor.translateAlternateColorCodes('&', str);
+    }
+
+    public static String colorizeHex(String str) {
+        Matcher matcher = HEX_PATTERN.matcher(str);
+        while (matcher.find()) {
+            String group = matcher.group();
+            str = str.replace(group, ChatColor.of(group.substring(1)).toString());
+        }
+        return colorize(str);
     }
 
     // Item Pickup Event
@@ -455,19 +471,48 @@ public class PreviListener implements Listener {
         }
     }
 
-    
+    // On potion apply
+    @EventHandler
+    void EntityPotionEffectEvent(EntityPotionEffectEvent event) {
+        if (event.getEntity() instanceof Player) {
+            Player player = (Player) event.getEntity();
+            // Check for strength 2+
+            if (event.getNewEffect().getType().equals(PotionEffectType.INCREASE_DAMAGE) && event.getNewEffect().getAmplifier() >= 1) {
+                if (!lastMessageTime.containsKey(player.getUniqueId()) ||
+                        System.currentTimeMillis() - lastMessageTime.get(player.getUniqueId()) >= MESSAGE_COOLDOWN) {
+                    if (plugin.isNotifyEnabled(player.getUniqueId())) {
+                        player.sendMessage(PS + NO_STRENGTH + EXCLAIM);
+                    }
+                    lastMessageTime.put(player.getUniqueId(), System.currentTimeMillis());
+                }
+                // decrease strength to strength 1
+                event.setCancelled(true);
+                int duration = event.getNewEffect().getDuration();
+                player.removePotionEffect(PotionEffectType.INCREASE_DAMAGE);
+                PotionEffect strength1 = new PotionEffect(PotionEffectType.INCREASE_DAMAGE, duration, 0, false, true, true);
+                player.addPotionEffect(strength1);
+            }
 
-    public static String colorize(String str) {
-        return ChatColor.translateAlternateColorCodes('&', str);
-    }
+            // Check for resistance 2+
+            if (event.getNewEffect().getType().equals(PotionEffectType.DAMAGE_RESISTANCE) && event.getNewEffect().getAmplifier() >= 1) {
+                if (!lastMessageTime.containsKey(player.getUniqueId()) ||
+                        System.currentTimeMillis() - lastMessageTime.get(player.getUniqueId()) >= MESSAGE_COOLDOWN) {
+                    if (plugin.isNotifyEnabled(player.getUniqueId())) {
+                        player.sendMessage(PS + NO_RESIST + EXCLAIM);
+                    }
+                    lastMessageTime.put(player.getUniqueId(), System.currentTimeMillis());
+                }
+                // decrease resistance to resistance 1
+                event.setCancelled(true);
+                int duration = event.getNewEffect().getDuration();
+                player.removePotionEffect(PotionEffectType.DAMAGE_RESISTANCE);
+                PotionEffect resistance1 = new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, duration, 0, false, true, true);
+                player.addPotionEffect(resistance1);
+            }
 
-    public static String colorizeHex(String str) {
-        Matcher matcher = HEX_PATTERN.matcher(str);
-        while (matcher.find()) {
-            String group = matcher.group();
-            str = str.replace(group, ChatColor.of(group.substring(1)).toString());
         }
-        return colorize(str);
     }
+
+
 
 }
