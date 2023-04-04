@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.github.cats1337</groupId>
-  <artifactId>previstack</artifactId>
+  <artifactId>PreviStack</artifactId>
   <version>1.0.0</version>
   <packaging>jar</packaging>
     
