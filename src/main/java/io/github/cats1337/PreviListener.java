@@ -13,7 +13,6 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.event.entity.EntityPotionEffectEvent;
-import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
@@ -522,26 +521,6 @@ public class PreviListener implements Listener {
                         true,
                         true);
                 player.addPotionEffect(resistance1);
-            }
-        }
-    }
-
-
-    // Remove infinity enchant from bow
-    @EventHandler
-    public void onEntityShootBow(EntityShootBowEvent event) {
-        if (event.getEntityType() == EntityType.PLAYER) {
-            Player player = (Player) event.getEntity();
-            ItemStack bow = event.getBow();
-            if (!lastMessageTime.containsKey(player.getUniqueId()) ||
-                    System.currentTimeMillis() - lastMessageTime.get(player.getUniqueId()) >= MESSAGE_COOLDOWN) {
-                if (plugin.isNotifyEnabled(player.getUniqueId())) {
-                    player.sendMessage(PS + NOINF + EXCLAIM);
-                }
-                lastMessageTime.put(player.getUniqueId(), System.currentTimeMillis());
-            }
-            if (bow.containsEnchantment(Enchantment.ARROW_INFINITE)) {
-                bow.removeEnchantment(Enchantment.ARROW_INFINITE);
             }
         }
     }
