@@ -1,8 +1,6 @@
 package io.github.cats1337;
 
 import org.bukkit.Material;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -47,8 +45,6 @@ public class PreviListener implements Listener {
 
     private final String NO_STRENGTH = colorizeHex("&#E90700S&#EA0B00t&#EC0F00r&#ED1200e&#EF1600n&#F01A00g&#F11E00t&#F32200h &#F42600R&#F52900e&#F72D00d&#F83100u&#FA3500c&#FB3900e&#FC3C00d &#FE4000→ &#FF44001");
     private final String NO_RESIST = colorizeHex("&#828A9BR&#7E8698e&#7A8395s&#777F92i&#737B8Es&#6F788Bt&#6B7488a&#687085n&#646D82c&#60697Fe &#5C657BR&#586278e&#555E75d&#515A72u&#4D576Fc&#49536Ce&#464F68d &#424C65→ &#3E48621");
-
-    private final String NOINF = colorizeHex("&cYou cannot have &#F3904FI&#D98554n&#BE7A59f&#A46F5Ei&#8A6462n&#705967i&#554E6Ct&#3B4371y &con your bow");
 
     private final long MESSAGE_COOLDOWN = 10000; // 10 seconds in milliseconds
     private final HashMap<UUID, Long> lastMessageTime = new HashMap<>();
