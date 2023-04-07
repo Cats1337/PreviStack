@@ -26,6 +26,7 @@ public class PreviListener implements Listener {
     private final int MAX_ENDER_PEARLS = 8;
     private final int MAX_COBWEBS = 16;
     private final int MAX_NOTCH_APPLES = 8;
+    private final int MAX_TOTEMS = 3;
 
     public static final String PS = colorizeHex("&#3494E6[&#7163EEP&#AE31F7S&#EB00FF] ");
 
@@ -39,6 +40,8 @@ public class PreviListener implements Listener {
     private final String EPEARL = colorizeHex(" &#00FFE0E&#18E6E3n&#2FCCE6d&#47B3E9e&#5E99ECr &#7680F0P&#8D66F3e&#A54DF6a&#BC33F9r&#D41AFCl&#EB00FFs");
     private final String CWEB = colorizeHex(" &#C4CED2C&#B7C1C4o&#AAB3B7b&#9EA6A9w&#91989Be&#848B8Eb&#777D80s");
     private final String NOTCH = colorizeHex(" &#FFE259N&#FFDC58o&#FFD657t&#FFD057c&#FFCA56h &#FFC555A&#FFBF54p&#FFB953p&#FFB353l&#FFAD52e&#FFA751s");
+    private final String TOTEM = colorizeHex(" &#D1A75DT&#C1A95Bo&#B1AA59t&#A1AC58e&#91AD56m &#81AF54o&#71B052f &#60B251U&#50B34Fn&#40B54Dd&#30B64By&#20B84Ai&#10B948n&#00BB46g");
+
     private final long MESSAGE_COOLDOWN = 10000; // 10 seconds in milliseconds
     private final HashMap<UUID, Long> lastMessageTime = new HashMap<>();
 
@@ -150,6 +153,35 @@ public class PreviListener implements Listener {
                 }
             }
         }
+
+        // Totem Check
+        if (event.getItem().getItemStack().getType() == Material.TOTEM_OF_UNDYING && item != null) {
+            Player player = (Player) event.getEntity();
+            int totemCount = 0;
+            int toPickUp = item.getAmount();
+            for (ItemStack itemStack : player.getInventory().getContents()) {
+                if (itemStack != null && itemStack.getType() == Material.TOTEM_OF_UNDYING) {
+                    totemCount += itemStack.getAmount();
+                }
+            }
+            if (totemCount < MAX_TOTEMS) {
+                if (totemCount + toPickUp > MAX_TOTEMS) {
+                    int excess = totemCount + toPickUp - MAX_TOTEMS;
+                    event.getItem().setItemStack(new ItemStack(Material.TOTEM_OF_UNDYING, toPickUp - excess));
+                    player.getWorld().dropItemNaturally(player.getLocation(),
+                            new ItemStack(Material.TOTEM_OF_UNDYING, excess));
+                }
+            } else {
+                event.setCancelled(true);
+                if (!lastMessageTime.containsKey(player.getUniqueId()) ||
+                        System.currentTimeMillis() - lastMessageTime.get(player.getUniqueId()) >= MESSAGE_COOLDOWN) {
+                    if (plugin.isNotifyEnabled(player.getUniqueId())) {
+                        player.sendMessage(PS + CANT_CARRY + MAX_TOTEMS + TOTEM + PERIOD);
+                    }
+                    lastMessageTime.put(player.getUniqueId(), System.currentTimeMillis());
+                }
+            }
+        }
     }
 
     @EventHandler
@@ -159,6 +191,7 @@ public class PreviListener implements Listener {
         int pearlCount = 0;
         int cobwebCount = 0;
         int notchAppleCount = 0;
+        int totemCount = 0;
         for (ItemStack item : contents) {
             if (item != null && item.getType() == Material.ENDER_PEARL) {
                 pearlCount += item.getAmount();
@@ -169,8 +202,12 @@ public class PreviListener implements Listener {
             if (item != null && item.getType() == Material.ENCHANTED_GOLDEN_APPLE) {
                 notchAppleCount += item.getAmount();
             }
+            if (item != null && item.getType() == Material.TOTEM_OF_UNDYING) {
+                totemCount += item.getAmount();
+            }
         }
 
+        // Ender Pearl Check
         if (pearlCount > MAX_ENDER_PEARLS) {
             int excessPearls = pearlCount - MAX_ENDER_PEARLS;
             if (plugin.isNotifyEnabled(player.getUniqueId())) {
@@ -200,6 +237,7 @@ public class PreviListener implements Listener {
             }
         }
 
+        // Cobweb Check
         if (cobwebCount > MAX_COBWEBS) {
             int excessCobwebs = cobwebCount - MAX_COBWEBS;
             if (plugin.isNotifyEnabled(player.getUniqueId())) {
@@ -224,6 +262,7 @@ public class PreviListener implements Listener {
             }
         }
 
+        // Notch Apple Check
         if (notchAppleCount > MAX_NOTCH_APPLES) {
             int excessNotchApples = notchAppleCount - MAX_NOTCH_APPLES;
             if (plugin.isNotifyEnabled(player.getUniqueId())) {
@@ -247,6 +286,32 @@ public class PreviListener implements Listener {
                 }
             }
         }
+
+        // Totem Check
+        if (totemCount > MAX_TOTEMS){
+            int excessTotems = totemCount - MAX_TOTEMS;
+            if (plugin.isNotifyEnabled(player.getUniqueId())) {
+                player.sendMessage(PS + TOO_MANY + TOTEM + EXCLAIM + EXCESS_DROP);
+            }
+            for (int i = 0; i < contents.length; i++) {
+                ItemStack item = contents[i];
+                if (item != null && item.getType() == Material.TOTEM_OF_UNDYING) {
+                    if (item.getAmount() <= excessTotems) {
+                        player.getInventory().removeItem(item);
+                        player.getWorld().dropItemNaturally(player.getLocation(),
+                                new ItemStack(Material.TOTEM_OF_UNDYING, excessTotems));
+                        excessTotems -= item.getAmount();
+                    } else {
+                        item.setAmount(item.getAmount() - excessTotems);
+                        player.getWorld().dropItemNaturally(player.getLocation(),
+                                new ItemStack(Material.TOTEM_OF_UNDYING, excessTotems));
+                        player.getInventory().setItem(i, item);
+                        break;
+                    }
+                }
+            }
+        }
+        
     }
 
     // Inventory Close Event
@@ -257,6 +322,7 @@ public class PreviListener implements Listener {
         int pearlCount = 0;
         int cobwebCount = 0;
         int notchAppleCount = 0;
+        int totemCount = 0;
         for (ItemStack item : contents) {
             if (item != null && item.getType() == Material.ENDER_PEARL) {
                 pearlCount += item.getAmount();
@@ -267,8 +333,12 @@ public class PreviListener implements Listener {
             if (item != null && item.getType() == Material.ENCHANTED_GOLDEN_APPLE) {
                 notchAppleCount += item.getAmount();
             }
+            if (item != null && item.getType() == Material.TOTEM_OF_UNDYING) {
+                totemCount += item.getAmount();
+            }
         }
 
+        // Ender Pearl Check
         if (pearlCount > MAX_ENDER_PEARLS) {
             int excessPearls = pearlCount - MAX_ENDER_PEARLS;
             if (plugin.isNotifyEnabled(player.getUniqueId())) {
@@ -298,6 +368,7 @@ public class PreviListener implements Listener {
             }
         }
 
+        // Cobweb Check
         if (cobwebCount > MAX_COBWEBS) {
             int excessCobwebs = cobwebCount - MAX_COBWEBS;
             if (plugin.isNotifyEnabled(player.getUniqueId())) {
@@ -322,6 +393,7 @@ public class PreviListener implements Listener {
             }
         }
 
+        // Notch Apple Check
         if (notchAppleCount > MAX_NOTCH_APPLES) {
             int excessNotchApples = notchAppleCount - MAX_NOTCH_APPLES;
             if (plugin.isNotifyEnabled(player.getUniqueId())) {
@@ -339,6 +411,31 @@ public class PreviListener implements Listener {
                         item.setAmount(item.getAmount() - excessNotchApples);
                         player.getWorld().dropItemNaturally(player.getLocation(),
                                 new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, excessNotchApples));
+                        player.getInventory().setItem(i, item);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Totem Check
+        if (totemCount > MAX_TOTEMS) {
+            int excessTotems = totemCount - MAX_TOTEMS;
+            if (plugin.isNotifyEnabled(player.getUniqueId())) {
+                player.sendMessage(PS + TOO_MANY + TOTEM + EXCLAIM + EXCESS_DROP);
+            }
+            for (int i = 0; i < contents.length; i++) {
+                ItemStack item = contents[i];
+                if (item != null && item.getType() == Material.TOTEM_OF_UNDYING) {
+                    if (item.getAmount() <= excessTotems) {
+                        player.getInventory().removeItem(item);
+                        player.getWorld().dropItemNaturally(player.getLocation(),
+                                new ItemStack(Material.TOTEM_OF_UNDYING, excessTotems));
+                        excessTotems -= item.getAmount();
+                    } else {
+                        item.setAmount(item.getAmount() - excessTotems);
+                        player.getWorld().dropItemNaturally(player.getLocation(),
+                                new ItemStack(Material.TOTEM_OF_UNDYING, excessTotems));
                         player.getInventory().setItem(i, item);
                         break;
                     }
@@ -357,6 +454,7 @@ public class PreviListener implements Listener {
             int pearlCount = 0;
             int cobwebCount = 0;
             int notchAppleCount = 0;
+            int totemCount = 0;
             for (ItemStack item : contents) {
                 if (item != null && item.getType() == Material.ENDER_PEARL) {
                     pearlCount += item.getAmount();
@@ -366,6 +464,9 @@ public class PreviListener implements Listener {
                 }
                 if (item != null && item.getType() == Material.ENCHANTED_GOLDEN_APPLE) {
                     notchAppleCount += item.getAmount();
+                }
+                if (item != null && item.getType() == Material.TOTEM_OF_UNDYING) {
+                    totemCount += item.getAmount();
                 }
             }
 
@@ -404,6 +505,7 @@ public class PreviListener implements Listener {
                 player.updateInventory();
             }
 
+            // Check for cobwebs
             if (cobwebCount > MAX_COBWEBS) {
                 int excessCobwebs = cobwebCount - MAX_COBWEBS;
                 if (!lastMessageTime.containsKey(player.getUniqueId()) ||
@@ -433,6 +535,7 @@ public class PreviListener implements Listener {
                 player.updateInventory();
             }
 
+            // Check for notch apples
             if (notchAppleCount > MAX_NOTCH_APPLES) {
                 int excessNotchApples = notchAppleCount - MAX_NOTCH_APPLES;
                 if (!lastMessageTime.containsKey(player.getUniqueId()) ||
@@ -461,6 +564,38 @@ public class PreviListener implements Listener {
                 }
                 player.updateInventory();
             }
+
+
+            // Check for totems
+            if (totemCount > MAX_TOTEMS) {
+                int excessTotems = totemCount - MAX_TOTEMS;
+                if (!lastMessageTime.containsKey(player.getUniqueId()) ||
+                        System.currentTimeMillis() - lastMessageTime.get(player.getUniqueId()) >= MESSAGE_COOLDOWN) {
+                    if (plugin.isNotifyEnabled(player.getUniqueId())) {
+                        player.sendMessage(PS + TOO_MANY + TOTEM + EXCLAIM + EXCESS_DROP);
+                    }
+                    lastMessageTime.put(player.getUniqueId(), System.currentTimeMillis());
+                }
+                for (int i = 0; i < contents.length; i++) {
+                    ItemStack item = contents[i];
+                    if (item != null && item.getType() == Material.TOTEM_OF_UNDYING) {
+                        if (item.getAmount() <= excessTotems) {
+                            player.getInventory().removeItem(item);
+                            player.getWorld().dropItemNaturally(player.getLocation(),
+                                    new ItemStack(Material.TOTEM_OF_UNDYING, excessTotems));
+                            excessTotems -= item.getAmount();
+                        } else {
+                            item.setAmount(item.getAmount() - excessTotems);
+                            player.getWorld().dropItemNaturally(player.getLocation(),
+                                    new ItemStack(Material.TOTEM_OF_UNDYING, excessTotems));
+                            player.getInventory().setItem(i, item);
+                            break;
+                        }
+                    }
+                }
+                player.updateInventory();
+            }
+
         }
     }
 }
