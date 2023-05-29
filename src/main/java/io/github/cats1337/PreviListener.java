@@ -23,9 +23,12 @@ public class PreviListener implements Listener {
 
     private static final Pattern HEX_PATTERN = Pattern.compile("&#([0-9a-fA-F]){6}");
 
+    public static boolean yorn = true; // yorn = yes or no
+
     private final int MAX_ENDER_PEARLS = 8;
     private final int MAX_COBWEBS = 16;
-    private final int MAX_NOTCH_APPLES = 8;
+    private final int MAX_NOTCH_APPLES = 4;
+    private final int MAX_GAPPLES = 12;
     private final int MAX_TOTEMS = 3;
 
     public static final String PS = colorizeHex("&#3494E6[&#7163EEP&#AE31F7S&#EB00FF] ");
@@ -41,6 +44,7 @@ public class PreviListener implements Listener {
     private final String CWEB = colorizeHex(" &#C4CED2C&#B7C1C4o&#AAB3B7b&#9EA6A9w&#91989Be&#848B8Eb&#777D80s");
     private final String NOTCH = colorizeHex(" &#FFE259N&#FFDC58o&#FFD657t&#FFD057c&#FFCA56h &#FFC555A&#FFBF54p&#FFB953p&#FFB353l&#FFAD52e&#FFA751s");
     private final String TOTEM = colorizeHex(" &#D1A75DT&#C1A95Bo&#B1AA59t&#A1AC58e&#91AD56m &#81AF54o&#71B052f &#60B251U&#50B34Fn&#40B54Dd&#30B64By&#20B84Ai&#10B948n&#00BB46g");
+    private final String GAPP = colorizeHex(" &#F3904FG&#F49A48o&#F5A441l&#F6AE39d&#F7B832e&#F8C22Bn &#FACD24A&#FBD71Dp&#FCE116p&#FDEB0El&#FEF507e&#FFFF00s");
 
     private final long MESSAGE_COOLDOWN = 10000; // 10 seconds in milliseconds
     private final HashMap<UUID, Long> lastMessageTime = new HashMap<>();
@@ -65,8 +69,11 @@ public class PreviListener implements Listener {
     // Item Pickup Event
     @EventHandler
     public void onPlayerPickupItem(EntityPickupItemEvent event) {
-        ItemStack item = event.getItem().getItemStack();
+        if (yorn == false) {
+            return;
+        }
 
+        ItemStack item = event.getItem().getItemStack();
         // Ender Pearl Check
         if (event.getItem().getItemStack().getType() == Material.ENDER_PEARL && item != null) {
             Player player = (Player) event.getEntity();
@@ -164,9 +171,9 @@ public class PreviListener implements Listener {
                     totemCount += itemStack.getAmount();
                 }
             }
-            if (totemCount < MAX_TOTEMS) {
-                if (totemCount + toPickUp > MAX_TOTEMS) {
-                    int excess = totemCount + toPickUp - MAX_TOTEMS;
+            if (totemCount < MAX_GAPPLES) {
+                if (totemCount + toPickUp > MAX_GAPPLES) {
+                    int excess = totemCount + toPickUp - MAX_GAPPLES;
                     event.getItem().setItemStack(new ItemStack(Material.TOTEM_OF_UNDYING, toPickUp - excess));
                     player.getWorld().dropItemNaturally(player.getLocation(),
                             new ItemStack(Material.TOTEM_OF_UNDYING, excess));
@@ -176,7 +183,36 @@ public class PreviListener implements Listener {
                 if (!lastMessageTime.containsKey(player.getUniqueId()) ||
                         System.currentTimeMillis() - lastMessageTime.get(player.getUniqueId()) >= MESSAGE_COOLDOWN) {
                     if (plugin.isNotifyEnabled(player.getUniqueId())) {
-                        player.sendMessage(PS + CANT_CARRY + MAX_TOTEMS + TOTEM + PERIOD);
+                        player.sendMessage(PS + CANT_CARRY + MAX_GAPPLES + TOTEM + PERIOD);
+                    }
+                    lastMessageTime.put(player.getUniqueId(), System.currentTimeMillis());
+                }
+            }
+        }
+
+        // Golden Apple Check
+        if (event.getItem().getItemStack().getType() == Material.GOLDEN_APPLE && item != null) {
+            Player player = (Player) event.getEntity();
+            int gappleCount = 0;
+            int gaPickUp = item.getAmount();
+            for (ItemStack itemStack : player.getInventory().getContents()) {
+                if (itemStack != null && itemStack.getType() == Material.GOLDEN_APPLE) {
+                    gappleCount += itemStack.getAmount();
+                }
+            }
+            if (gappleCount < MAX_GAPPLES) {
+                if (gappleCount + gaPickUp > MAX_GAPPLES) {
+                    int excess = gappleCount + gaPickUp - MAX_GAPPLES;
+                    event.getItem().setItemStack(new ItemStack(Material.GOLDEN_APPLE, gaPickUp - excess));
+                    player.getWorld().dropItemNaturally(player.getLocation(),
+                            new ItemStack(Material.GOLDEN_APPLE, excess));
+                }
+            } else {
+                event.setCancelled(true);
+                if (!lastMessageTime.containsKey(player.getUniqueId()) ||
+                        System.currentTimeMillis() - lastMessageTime.get(player.getUniqueId()) >= MESSAGE_COOLDOWN) {
+                    if (plugin.isNotifyEnabled(player.getUniqueId())) {
+                        player.sendMessage(PS + CANT_CARRY + MAX_GAPPLES + GAPP + PERIOD);
                     }
                     lastMessageTime.put(player.getUniqueId(), System.currentTimeMillis());
                 }
@@ -184,145 +220,20 @@ public class PreviListener implements Listener {
         }
     }
 
-    // @EventHandler
-    // public void onInventoryUpdate(InventoryClickEvent event) {
-    //     Player player = (Player) event.getWhoClicked();
-    //     ItemStack[] contents = player.getInventory().getContents();
-    //     int pearlCount = 0;
-    //     int cobwebCount = 0;
-    //     int notchAppleCount = 0;
-    //     int totemCount = 0;
-    //     for (ItemStack item : contents) {
-    //         if (item != null && item.getType() == Material.ENDER_PEARL) {
-    //             pearlCount += item.getAmount();
-    //         }
-    //         if (item != null && item.getType() == Material.COBWEB) {
-    //             cobwebCount += item.getAmount();
-    //         }
-    //         if (item != null && item.getType() == Material.ENCHANTED_GOLDEN_APPLE) {
-    //             notchAppleCount += item.getAmount();
-    //         }
-    //         if (item != null && item.getType() == Material.TOTEM_OF_UNDYING) {
-    //             totemCount += item.getAmount();
-    //         }
-    //     }
-
-    //     // Ender Pearl Check
-    //     if (pearlCount > MAX_ENDER_PEARLS) {
-    //         int excessPearls = pearlCount - MAX_ENDER_PEARLS;
-    //         if (plugin.isNotifyEnabled(player.getUniqueId())) {
-    //             player.sendMessage(PS + TOO_MANY + EPEARL + EXCLAIM + EXCESS_DROP);
-    //         }
-    //         // Remove excess pearls from inventory and drop them on the ground
-    //         for (int i = 0; i < contents.length; i++) {
-    //             ItemStack item = contents[i];
-    //             if (item != null && item.getType() == Material.ENDER_PEARL) {
-    //                 if (item.getAmount() <= excessPearls) { // Remove entire stack
-    //                     player.getInventory().removeItem(item); // Remove item from inventory
-    //                     excessPearls -= item.getAmount(); // Subtract amount of item from excess
-    //                     player.getWorld().dropItemNaturally(player.getLocation(), item); // Drop item on ground
-    //                 } else if (excessPearls > 0) { // Remove excess from stack
-    //                     ItemStack newItem = item.clone(); // Create new item stack
-    //                     newItem.setAmount(excessPearls); // Set amount of new item stack
-    //                     player.getInventory().removeItem(newItem); // Remove item from inventory
-    //                     excessPearls = 0; // Set excess to 0
-    //                     player.getWorld().dropItemNaturally(player.getLocation(), newItem); // Drop item on ground
-    //                     item.setAmount(item.getAmount() - excessPearls); // Subtract excess from original item stack
-    //                     player.getInventory().setItem(i, item); // Set original item stack in inventory
-    //                     break; // Break out of loop
-    //                 } else {
-    //                     break;
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     // Cobweb Check
-    //     if (cobwebCount > MAX_COBWEBS) {
-    //         int excessCobwebs = cobwebCount - MAX_COBWEBS;
-    //         if (plugin.isNotifyEnabled(player.getUniqueId())) {
-    //             player.sendMessage(PS + TOO_MANY + CWEB + EXCLAIM + EXCESS_DROP);
-    //         }
-    //         for (int i = 0; i < contents.length; i++) {
-    //             ItemStack item = contents[i];
-    //             if (item != null && item.getType() == Material.COBWEB) {
-    //                 if (item.getAmount() <= excessCobwebs) {
-    //                     player.getInventory().removeItem(item);
-    //                     player.getWorld().dropItemNaturally(player.getLocation(),
-    //                             new ItemStack(Material.COBWEB, excessCobwebs));
-    //                     excessCobwebs -= item.getAmount();
-    //                 } else {
-    //                     item.setAmount(item.getAmount() - excessCobwebs);
-    //                     player.getWorld().dropItemNaturally(player.getLocation(),
-    //                             new ItemStack(Material.COBWEB, excessCobwebs));
-    //                     player.getInventory().setItem(i, item);
-    //                     break;
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     // Notch Apple Check
-    //     if (notchAppleCount > MAX_NOTCH_APPLES) {
-    //         int excessNotchApples = notchAppleCount - MAX_NOTCH_APPLES;
-    //         if (plugin.isNotifyEnabled(player.getUniqueId())) {
-    //             player.sendMessage(PS + TOO_MANY + NOTCH + EXCLAIM + EXCESS_DROP);
-    //         }
-    //         for (int i = 0; i < contents.length; i++) {
-    //             ItemStack item = contents[i];
-    //             if (item != null && item.getType() == Material.ENCHANTED_GOLDEN_APPLE) {
-    //                 if (item.getAmount() <= excessNotchApples) {
-    //                     player.getInventory().removeItem(item);
-    //                     player.getWorld().dropItemNaturally(player.getLocation(),
-    //                             new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, excessNotchApples));
-    //                     excessNotchApples -= item.getAmount();
-    //                 } else {
-    //                     item.setAmount(item.getAmount() - excessNotchApples);
-    //                     player.getWorld().dropItemNaturally(player.getLocation(),
-    //                             new ItemStack(Material.ENCHANTED_GOLDEN_APPLE, excessNotchApples));
-    //                     player.getInventory().setItem(i, item);
-    //                     break;
-    //                 }
-    //             }
-    //         }
-    //     }
-
-    //     // Totem Check
-    //     if (totemCount > MAX_TOTEMS){
-    //         int excessTotems = totemCount - MAX_TOTEMS;
-    //         if (plugin.isNotifyEnabled(player.getUniqueId())) {
-    //             player.sendMessage(PS + TOO_MANY + TOTEM + EXCLAIM + EXCESS_DROP);
-    //         }
-    //         for (int i = 0; i < contents.length; i++) {
-    //             ItemStack item = contents[i];
-    //             if (item != null && item.getType() == Material.TOTEM_OF_UNDYING) {
-    //                 if (item.getAmount() <= excessTotems) {
-    //                     player.getInventory().removeItem(item);
-    //                     player.getWorld().dropItemNaturally(player.getLocation(),
-    //                             new ItemStack(Material.TOTEM_OF_UNDYING, excessTotems));
-    //                     excessTotems -= item.getAmount();
-    //                 } else {
-    //                     item.setAmount(item.getAmount() - excessTotems);
-    //                     player.getWorld().dropItemNaturally(player.getLocation(),
-    //                             new ItemStack(Material.TOTEM_OF_UNDYING, excessTotems));
-    //                     player.getInventory().setItem(i, item);
-    //                     break;
-    //                 }
-    //             }
-    //         }
-    //     }
-        
-    // }
-
     // Inventory Close Event
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
+        if (yorn == false) {
+            return;
+        }
+
         Player player = (Player) event.getPlayer();
         ItemStack[] contents = player.getInventory().getContents();
         int pearlCount = 0;
         int cobwebCount = 0;
         int notchAppleCount = 0;
         int totemCount = 0;
+        int gappleCount = 0;
         for (ItemStack item : contents) {
             if (item != null && item.getType() == Material.ENDER_PEARL) {
                 pearlCount += item.getAmount();
@@ -335,6 +246,9 @@ public class PreviListener implements Listener {
             }
             if (item != null && item.getType() == Material.TOTEM_OF_UNDYING) {
                 totemCount += item.getAmount();
+            }
+            if (item != null && item.getType() == Material.GOLDEN_APPLE) {
+                gappleCount += item.getAmount();
             }
         }
 
@@ -443,6 +357,31 @@ public class PreviListener implements Listener {
             }
         }
 
+        // Gapple Check
+        if (gappleCount > MAX_GAPPLES) {
+            int excessGapples = gappleCount - MAX_GAPPLES;
+            if (plugin.isNotifyEnabled(player.getUniqueId())) {
+                player.sendMessage(PS + TOO_MANY + GAPP + EXCLAIM + EXCESS_DROP);
+            }
+            for (int i = 0; i < contents.length; i++) {
+                ItemStack item = contents[i];
+                if (item != null && item.getType() == Material.GOLDEN_APPLE) {
+                    if (item.getAmount() <= excessGapples) {
+                        player.getInventory().removeItem(item);
+                        player.getWorld().dropItemNaturally(player.getLocation(),
+                                new ItemStack(Material.GOLDEN_APPLE, excessGapples));
+                        excessGapples -= item.getAmount();
+                    } else {
+                        item.setAmount(item.getAmount() - excessGapples);
+                        player.getWorld().dropItemNaturally(player.getLocation(),
+                                new ItemStack(Material.GOLDEN_APPLE, excessGapples));
+                        player.getInventory().setItem(i, item);
+                        break;
+                    }
+                }
+            }
+        }
+
     }
 
     // On item use
@@ -455,6 +394,7 @@ public class PreviListener implements Listener {
             int cobwebCount = 0;
             int notchAppleCount = 0;
             int totemCount = 0;
+            int gappleCount = 0;
             for (ItemStack item : contents) {
                 if (item != null && item.getType() == Material.ENDER_PEARL) {
                     pearlCount += item.getAmount();
@@ -467,6 +407,9 @@ public class PreviListener implements Listener {
                 }
                 if (item != null && item.getType() == Material.TOTEM_OF_UNDYING) {
                     totemCount += item.getAmount();
+                }
+                if (item != null && item.getType() == Material.GOLDEN_APPLE) {
+                    gappleCount += item.getAmount();
                 }
             }
 
@@ -565,14 +508,13 @@ public class PreviListener implements Listener {
                 player.updateInventory();
             }
 
-
-            // Check for totems
+            // Check for Totems
             if (totemCount > MAX_TOTEMS) {
                 int excessTotems = totemCount - MAX_TOTEMS;
                 if (!lastMessageTime.containsKey(player.getUniqueId()) ||
                         System.currentTimeMillis() - lastMessageTime.get(player.getUniqueId()) >= MESSAGE_COOLDOWN) {
                     if (plugin.isNotifyEnabled(player.getUniqueId())) {
-                        player.sendMessage(PS + TOO_MANY + TOTEM + EXCLAIM + EXCESS_DROP);
+                        player.sendMessage(PS + TOO_MANY + GAPP + EXCLAIM + EXCESS_DROP);
                     }
                     lastMessageTime.put(player.getUniqueId(), System.currentTimeMillis());
                 }
@@ -588,6 +530,36 @@ public class PreviListener implements Listener {
                             item.setAmount(item.getAmount() - excessTotems);
                             player.getWorld().dropItemNaturally(player.getLocation(),
                                     new ItemStack(Material.TOTEM_OF_UNDYING, excessTotems));
+                            player.getInventory().setItem(i, item);
+                            break;
+                        }
+                    }
+                }
+                player.updateInventory();
+            }
+
+            // Check for godlen apples
+            if (gappleCount > MAX_GAPPLES) {
+                int excessGapples = gappleCount - MAX_GAPPLES;
+                if (!lastMessageTime.containsKey(player.getUniqueId()) ||
+                        System.currentTimeMillis() - lastMessageTime.get(player.getUniqueId()) >= MESSAGE_COOLDOWN) {
+                    if (plugin.isNotifyEnabled(player.getUniqueId())) {
+                        player.sendMessage(PS + TOO_MANY + GAPP + EXCLAIM + EXCESS_DROP);
+                    }
+                    lastMessageTime.put(player.getUniqueId(), System.currentTimeMillis());
+                }
+                for (int i = 0; i < contents.length; i++) {
+                    ItemStack item = contents[i];
+                    if (item != null && item.getType() == Material.GOLDEN_APPLE) {
+                        if (item.getAmount() <= excessGapples) {
+                            player.getInventory().removeItem(item);
+                            player.getWorld().dropItemNaturally(player.getLocation(),
+                                    new ItemStack(Material.GOLDEN_APPLE, excessGapples));
+                            excessGapples -= item.getAmount();
+                        } else {
+                            item.setAmount(item.getAmount() - excessGapples);
+                            player.getWorld().dropItemNaturally(player.getLocation(),
+                                    new ItemStack(Material.GOLDEN_APPLE, excessGapples));
                             player.getInventory().setItem(i, item);
                             break;
                         }

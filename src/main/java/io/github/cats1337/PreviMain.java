@@ -20,6 +20,9 @@ public class PreviMain extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(new PreviListener(this), this);
         getCommand("psnotify").setExecutor(new PreviCommands(this));
+        getCommand("psdisable").setExecutor(new PreviCommands(this));
+        getCommand("psenable").setExecutor(new PreviCommands(this));
+        getCommand("psstatus").setExecutor(new PreviCommands(this));
 
     }
 

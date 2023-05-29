@@ -32,6 +32,34 @@ public class PreviCommands implements CommandExecutor {
             }
             return true;
         }
+        
+        if (command.getName().equalsIgnoreCase("psdisable")) {
+            if(!(sender instanceof Player)) {
+                sender.sendMessage( ChatColor.translateAlternateColorCodes('&', PS + "&8PreviStack &cdisabled&8."));
+                PreviListener.yorn = false;
+                return true;
+            }
+        }
+
+        if (command.getName().equalsIgnoreCase("psenable")) {
+            if(!(sender instanceof Player)) {
+                sender.sendMessage(ChatColor.translateAlternateColorCodes('&', PS + "&8PreviStack &aenabled&8."));
+                PreviListener.yorn = true;
+                return true;
+            }
+        }
+
+        if (command.getName().equalsIgnoreCase("psstatus")) {
+            if(!(sender instanceof Player)) {
+                if(PreviListener.yorn == true) {
+                    sender.sendMessage(ChatColor.translateAlternateColorCodes('&', PS + "&8PreviStack is currently &aenabled&8."));
+                }
+                if(PreviListener.yorn == false) {
+                    sender.sendMessage(ChatColor.translateAlternateColorCodes('&', PS + "&8PreviStack is currently &cdisabled&8."));
+                }
+                return true;
+            }
+        }
         return true;
     }
 }
