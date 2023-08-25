@@ -9,14 +9,14 @@ import java.util.UUID;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-public class PreviData {
-    private final PreviMain plugin;
+public class PluginData {
+    private final PluginMain plugin;
     private final FileConfiguration config;
     private final File file;
 
     private final Map<UUID, Boolean> notifyStatuses;
 
-    public PreviData(PreviMain plugin) {
+    public PluginData(PluginMain plugin) {
         this.plugin = plugin;
         this.notifyStatuses = new HashMap<>();
 

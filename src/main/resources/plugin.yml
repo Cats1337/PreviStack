@@ -1,10 +1,10 @@
-name: PreviStack
-main: io.github.cats1337.PreviMain
-version: 1.0.4
-api-version: 1.19
-author: Cats
+name: LimitStack
+main: io.github.cats1337.LimitMain
+version: '${project.version}'
+api-version: '1.20'
+authors: [Cats1337]
 description: Prevent players from having too many of a certain item in their inventory.
-prefix: PreviStack
+prefix: LimitStack
 
 commands:
   psnotify:
